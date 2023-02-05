@@ -1,14 +1,28 @@
 #define UNICODE
 #pragma comment(linker,"/opt:nowin98")
+#pragma comment(lib,"gdiplus.lib")
 #include<windows.h>
+#include<gdiplus.h>
+
+using namespace Gdiplus;
 
 TCHAR szClassName[]=TEXT("Window");
 extern "C" int _fltused = 0x9875;
 
+HBITMAP LoadPictureAsBitmap(LPCTSTR pszFileName)
+{
+    Color c;
+    c.SetFromCOLORREF(RGB(0,0,0));
+    Bitmap b(pszFileName);
+    HBITMAP hbm=0;
+    b.GetHBITMAP(c, &hbm);
+    return hbm;
+}
+
 UINT GetHistogram(LPCTSTR szFileName,UINT* pHistogram)
 {
 	BITMAP  bm;
-	HBITMAP hBitmap = (HBITMAP)LoadImage( NULL, szFileName, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE );
+	HBITMAP hBitmap=LoadPictureAsBitmap(szFileName);
 	if( hBitmap == NULL ) return 0;
 	GetObject(hBitmap, sizeof(BITMAP), &bm );
 	HDC hMemDC1 = CreateCompatibleDC( NULL );
@@ -97,6 +111,9 @@ LRESULT CALLBACK WndProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 
 EXTERN_C void __cdecl WinMainCRTStartup()
 {
+    GdiplusStartupInput gdiplusStartupInput;
+    ULONG_PTR gdiplusToken;
+    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 	MSG msg;
 	HINSTANCE hInstance=GetModuleHandle(0);
 	WNDCLASS wndclass={
@@ -132,6 +149,7 @@ EXTERN_C void __cdecl WinMainCRTStartup()
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
+    GdiplusShutdown(gdiplusToken);
 	ExitProcess(msg.wParam);
 }
 
